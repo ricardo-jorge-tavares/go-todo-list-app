@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	helpers "local.com/todo-list-app/internal/helpers"
-	web "local.com/todo-list-app/web"
+	"local.com/todo-list-app/internal/cache"
+	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/types"
+	"local.com/todo-list-app/web"
 )
 
 func main() {
+
+	// Create a new Cache instance
+	todoListCache := cache.New[string, types.TodoListItemType]()
 
 	router := http.NewServeMux()
 
@@ -20,7 +25,7 @@ func main() {
 	router.HandleFunc("GET /{$}", web.IndexRoute)
 
 	// UI routes.
-	appRouter := web.NewAppHandler().RegisterRoutes()
+	appRouter := web.NewAppController(todoListCache).RegisterRoutes()
 	router.Handle("/app/", http.StripPrefix("/app", appRouter))
 
 	fmt.Println("Server started at http://localhost:8080")

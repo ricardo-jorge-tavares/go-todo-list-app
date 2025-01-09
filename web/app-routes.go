@@ -1,39 +1,54 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
-	helpers "local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/cache"
+	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/types"
 )
 
-type AppHandler struct{}
-
-func NewAppHandler() *AppHandler {
-	return &AppHandler{}
+type appController struct {
+	// db *sql.DB
+	cache *cache.Cache[string, types.TodoListItemType]
 }
 
-func (h *AppHandler) RegisterRoutes() *http.ServeMux {
+func NewAppController(c *cache.Cache[string, types.TodoListItemType]) *appController {
+	return &appController{
+		cache: c,
+	}
+}
+
+func (c *appController) RegisterRoutes() *http.ServeMux {
 
 	r := http.NewServeMux()
-	r.HandleFunc("GET /{$}", appListRoute)
-	// r.HandleFunc("POST /", appListRoute)
+	r.HandleFunc("GET /{$}", appIndexRoute)
+	r.HandleFunc("GET /{userId}", c.appListRoute)
 	// r.HandleFunc("GET /{id}/", appListRoute)
 	// r.HandleFunc("DELETE /{id}/", appListRoute)
 
 	return r
 }
 
-func appListRoute(writer http.ResponseWriter, request *http.Request) {
+func appIndexRoute(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/app/user123", http.StatusFound)
+}
+
+func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.PathValue("userId")
+	fmt.Println(userId)
+
+	c.cache.Set(userId, types.TodoListItemType{Descrition: "Go to the gym", CreatedAt: time.Now(), IsComplete: false})
+
+	for k, v := range c.cache.List() {
+		fmt.Printf("Key: %s, Value: %s | %s | %v\n", k, v.Descrition, v.CreatedAt, v.IsComplete)
+	}
 
 	t, _ := helpers.ParseView("web/views/app/list.html")
-	err := t.Execute(writer, nil)
+	err := t.Execute(w, nil)
 	helpers.CheckError(err)
 
-	// fmt.Printf("Key: %d, Value: %s\n", writer, request.URL)
-	// // Create a template using the html
-	// tmpl, err := template.ParseFiles("web/views/app/list.html")
-	// helpers.CheckError(err)
-
-	// err = tmpl.Execute(writer, nil)
-	// helpers.CheckError(err)
 }
