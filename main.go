@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/joho/godotenv"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/helpers"
 	"local.com/todo-list-app/internal/sqldb"
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+
+	// Load environment variables from .env
+	err := godotenv.Load()
+	helpers.CheckError(err)
 
 	// Create a new Cache instance.
 	todoListCache := cache.New[string, types.TodoListItemType]()
