@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/services"
 	"local.com/todo-list-app/internal/sqldb"
 	"local.com/todo-list-app/internal/types"
 	"local.com/todo-list-app/web"
@@ -18,14 +19,17 @@ func main() {
 	err := godotenv.Load()
 	helpers.CheckError(err)
 
-	// Create a new Cache instance.
-	todoListCache := cache.New[string, types.TodoListItemType]()
-
 	// Connect to the database and initialize repositories.
 	db := sqldb.ConnectDB()
 	defer db.Close()
 
+	// Initialize repositories.
 	sqldbTodoRepository := sqldb.NewToDoRepository(db)
+
+	// Create a new Cache instance.
+	todoListCache := cache.New[string, types.TodoListItemType]()
+
+	todoService := services.TodoServiceInit(todoListCache, sqldbTodoRepository)
 
 	// Create a new ServeMux instance.
 	router := http.NewServeMux()
@@ -38,7 +42,7 @@ func main() {
 	router.HandleFunc("GET /{$}", web.IndexRoute)
 
 	// Web (UI) routes.
-	appRouter := web.NewAppController(todoListCache, sqldbTodoRepository).RegisterRoutes()
+	appRouter := web.NewAppController(todoService).RegisterRoutes()
 	router.Handle("/app/", http.StripPrefix("/app", appRouter))
 
 	fmt.Println("Server started at http://localhost:8080")

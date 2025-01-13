@@ -16,26 +16,26 @@ type Todo struct {
 	IsComplete  bool      `json:"isComplete"`
 }
 
-// ToDoRepository
-type ToDoRepository interface {
-	FindAll() ([]Todo, error)
-	FindById(id string) (Todo, error)
-	Insert(description string) string
-}
+// ToDoRepositoryInterface
+// type ToDoRepositoryInterface interface {
+// 	FindAll() ([]Todo, error)
+// 	FindById(id string) (Todo, error)
+// 	Insert(description string) string
+// }
 
-// SqlToDoRepository implements models.UserRepository
-type SqlToDoRepository struct {
+// SqlTodoRepository implements models.UserRepository
+type SqlTodoRepository struct {
 	db *sql.DB
 }
 
 // NewToDoRepository ..
-func NewToDoRepository(db *sql.DB) *SqlToDoRepository {
-	return &SqlToDoRepository{
+func NewToDoRepository(db *sql.DB) *SqlTodoRepository {
+	return &SqlTodoRepository{
 		db: db,
 	}
 }
 
-func (r *SqlToDoRepository) FindAll() ([]Todo, error) {
+func (r *SqlTodoRepository) FindAll() ([]Todo, error) {
 
 	rows, err := r.db.Query("SELECT * FROM todo")
 	if err != nil {
@@ -59,7 +59,7 @@ func (r *SqlToDoRepository) FindAll() ([]Todo, error) {
 }
 
 // FindById ..
-func (r *SqlToDoRepository) FindById(id string) (Todo, error) {
+func (r *SqlTodoRepository) FindById(id string) (Todo, error) {
 
 	var row = Todo{}
 	err := r.db.QueryRow("SELECT * FROM todo WHERE id=$1", id).Scan(&row.Id, &row.Description, &row.CreatedAt, &row.IsComplete)
@@ -77,7 +77,7 @@ func (r *SqlToDoRepository) FindById(id string) (Todo, error) {
 	return row, nil
 }
 
-func (r *SqlToDoRepository) Insert(description string) string {
+func (r *SqlTodoRepository) Insert(description string) string {
 
 	id := uuid.New().String()
 

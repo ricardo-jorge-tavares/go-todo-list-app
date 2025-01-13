@@ -2,6 +2,9 @@
 
 {{define "body"}}
 
+{{range .TodoList}}<div>{{ .Description }}</div>{{else}}<div><strong>no rows</strong></div>{{end}}
+
+
 <div class="page-content page-container" id="page-content">
   <div class="padding">
     <div class="row container d-flex justify-content-center">
