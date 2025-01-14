@@ -7,9 +7,9 @@ import (
 	"github.com/joho/godotenv"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/models"
 	"local.com/todo-list-app/internal/services"
 	"local.com/todo-list-app/internal/sqldb"
-	"local.com/todo-list-app/internal/types"
 	"local.com/todo-list-app/web"
 )
 
@@ -27,9 +27,9 @@ func main() {
 	sqldbTodoRepository := sqldb.NewToDoRepository(db)
 
 	// Create a new Cache instance.
-	todoListCache := cache.New[string, types.TodoListItemType]()
+	userCache := cache.New[string, models.CacheUserModel]()
 
-	todoService := services.TodoServiceInit(todoListCache, sqldbTodoRepository)
+	todoService := services.TodoServiceInit(userCache, sqldbTodoRepository)
 
 	// Create a new ServeMux instance.
 	router := http.NewServeMux()

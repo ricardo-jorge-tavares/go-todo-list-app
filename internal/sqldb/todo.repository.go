@@ -10,10 +10,12 @@ import (
 )
 
 type Todo struct {
-	Id          string    `json:"id"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"createdAt"`
-	IsComplete  bool      `json:"isComplete"`
+	Id          string       `json:"id"`
+	UserId      string       `json:"userId"`
+	Description string       `json:"description"`
+	IsComplete  bool         `json:"isComplete"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	DeletedAt   sql.NullTime `json:"deletedAt"`
 }
 
 // ToDoRepositoryInterface
@@ -47,7 +49,31 @@ func (r *SqlTodoRepository) FindAll() ([]Todo, error) {
 	var records []Todo
 	for rows.Next() {
 		var row Todo
-		err := rows.Scan(&row.Id, &row.Description, &row.CreatedAt, &row.IsComplete)
+		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.CreatedAt, &row.DeletedAt)
+		if err != nil {
+			log.Fatalf("Unable to scan the row. %v", err)
+			return nil, err
+		}
+		records = append(records, row)
+	}
+
+	return records, nil
+
+}
+
+func (r *SqlTodoRepository) FindAllByUser(userId string) ([]Todo, error) {
+
+	rows, err := r.db.Query("SELECT * FROM todo WHERE user_id=$1", userId)
+	if err != nil {
+		log.Fatalf("Unable to execute the query. %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var records []Todo
+	for rows.Next() {
+		var row Todo
+		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.CreatedAt, &row.DeletedAt)
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 			return nil, err
@@ -59,10 +85,10 @@ func (r *SqlTodoRepository) FindAll() ([]Todo, error) {
 }
 
 // FindById ..
-func (r *SqlTodoRepository) FindById(id string) (Todo, error) {
+func (r *SqlTodoRepository) FindByTodoId(id string) (Todo, error) {
 
 	var row = Todo{}
-	err := r.db.QueryRow("SELECT * FROM todo WHERE id=$1", id).Scan(&row.Id, &row.Description, &row.CreatedAt, &row.IsComplete)
+	err := r.db.QueryRow("SELECT * FROM todo WHERE id=$1", id).Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.CreatedAt, &row.DeletedAt)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -77,13 +103,14 @@ func (r *SqlTodoRepository) FindById(id string) (Todo, error) {
 	return row, nil
 }
 
-func (r *SqlTodoRepository) Insert(description string) string {
+func (r *SqlTodoRepository) Insert(userId string, description string) string {
 
 	id := uuid.New().String()
 
-	err := r.db.QueryRow("INSERT INTO todo (id, description, created_at, is_complete) VALUES ($1, $2, $3, $4) RETURNING id", id, description, time.Now(), false).Scan(&id)
+	err := r.db.QueryRow("INSERT INTO todo (id, user_id, description, is_complete, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id", id, userId, description, false, time.Now()).Scan(&id)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return id
 }

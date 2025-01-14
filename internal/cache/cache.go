@@ -37,11 +37,13 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 }
 
 // Set adds or updates a key-value pair in the cache.
-func (c *Cache[K, V]) Set(key K, value V) {
+func (c *Cache[K, V]) Set(key K, value V) V {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.items[key] = value
+
+	return value
 }
 
 // Remove deletes the key-value pair with the specified key from the cache.
