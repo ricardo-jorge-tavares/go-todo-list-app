@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -23,12 +24,32 @@ func NewAppController(s services.TodoServiceInterface) *appController {
 func (c *appController) RegisterRoutes() *http.ServeMux {
 
 	r := http.NewServeMux()
+	r.HandleFunc("POST /login/{$}", appLoginRoute)
 	r.HandleFunc("GET /{$}", appIndexRoute)
 	r.HandleFunc("GET /{userId}/", c.appListRoute)
-	r.HandleFunc("GET /{userId}/new/", c.appNewRoute)
+	r.HandleFunc("POST /{userId}/{$}", c.appNewTodoRoute)
+	r.HandleFunc("POST /{userId}/todo/{todoId}/{$}", c.appUpdateTodoRoute)
+	// r.HandleFunc("GET /{userId}/new/", c.appNewRoute)
 	// r.HandleFunc("DELETE /{id}/", appListRoute)
 
 	return r
+}
+
+func appLoginRoute(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("/app/login route served")
+
+	r.ParseForm()
+
+	userId := r.FormValue("formUser")
+	if userId == "" {
+		t, _ := helpers.ParseView("web/views/theme/error.html")
+		err := t.Execute(w, "formUser not supplied when trying to login")
+		helpers.CheckError(err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/app/%s/", userId), http.StatusFound)
 }
 
 func appIndexRoute(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +71,11 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 		IsComplete  bool
 	}
 
-	var viewData struct {
+	viewData := struct {
+		UserId   string
 		TodoList []todoListType
+	}{
+		UserId: userId,
 	}
 
 	list := c.todoService.GetUserTodoList(userId)
@@ -65,26 +89,54 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *appController) appNewRoute(w http.ResponseWriter, r *http.Request) {
+func (c *appController) appNewTodoRoute(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/app/{userId}/new route served")
 
 	userId := r.PathValue("userId")
 	fmt.Println(userId)
 
-	var viewData struct {
-		TodoList []struct {
-			id          string
-			Description string
-		}
+	r.ParseForm()
+
+	description := r.FormValue("formMessage")
+	if description == "" {
+		t, _ := helpers.ParseView("web/views/theme/error.html")
+		err := t.Execute(w, "formMessage not supplied when trying to insert new Todo item")
+		helpers.CheckError(err)
+		return
 	}
 
-	c.todoService.AddTodoItem(userId, "New todo item"+userId)
+	c.todoService.AddTodoItem(userId, description)
 
-	// http.Redirect(w, r, "/app/user123", http.StatusFound)
+	http.Redirect(w, r, fmt.Sprintf("/app/%s/", userId), http.StatusFound)
 
-	t, _ := helpers.ParseView("web/views/app/list.html")
-	err := t.Execute(w, viewData)
-	helpers.CheckError(err)
+}
+
+func (c *appController) appUpdateTodoRoute(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("/app/{userId}/todo/{todoId} route served")
+
+	userId := r.PathValue("userId")
+	todoId := r.PathValue("todoId")
+	fmt.Println(userId, todoId)
+
+	r.ParseForm()
+	description := r.FormValue("description")
+	if description == "" {
+		t, _ := helpers.ParseView("web/views/theme/error.html")
+		err := t.Execute(w, "description not supplied when trying to update new Todo item")
+		helpers.CheckError(err)
+		// return
+	}
+
+	c.todoService.UpdateTodoItem(userId, todoId, description)
+
+	var returnData = struct {
+		Id string `json:"id"`
+	}{
+		Id: todoId,
+	}
+	json.NewEncoder(w).Encode(returnData)
+	// http.Redirect(w, r, fmt.Sprintf("/app/%s/", userId), http.StatusFound)
 
 }

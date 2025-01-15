@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/models"
 	"local.com/todo-list-app/internal/sqldb"
@@ -28,6 +27,7 @@ type GetUserTodoListResponse struct {
 type TodoServiceInterface interface {
 	GetUserTodoList(userId string) []GetUserTodoListResponse
 	AddTodoItem(userId string, description string) (id string)
+	UpdateTodoItem(userId string, todoId string, description string) (id string)
 }
 
 // Functions.
@@ -51,20 +51,20 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 		return r
 	}
 
-	rows, _ := s.sqlDbTodoRepo.FindAllByUser(userId)
 	fmt.Println("Fetching info From DB")
+	rows, _ := s.sqlDbTodoRepo.FindAllByUser(userId)
 
-	user = s.setCacheNewUser(userId)
+	user = s.cacheSetUser(userId)
 
 	for _, item := range rows {
 
-		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, CreatedAt: item.CreatedAt, IsComplete: item.IsComplete})
-
-		s.setCacheUserTodo(&user, item.Id, models.CacheTodoItemModel{
+		user.TodoList.Set(item.Id, models.CacheTodoItemModel{
 			Description: item.Description,
 			CreatedAt:   item.CreatedAt,
 			IsComplete:  item.IsComplete,
 		})
+
+		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, CreatedAt: item.CreatedAt, IsComplete: item.IsComplete})
 
 	}
 
@@ -75,34 +75,27 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 func (s *TodoService) AddTodoItem(userId string, description string) (id string) {
 
 	// Insert into the database.
-	sqlId := s.sqlDbTodoRepo.Insert(userId, description)
-	fmt.Println("Inserted record with ID:", sqlId)
+	sqlTodoId := s.sqlDbTodoRepo.Insert(userId, description)
+	fmt.Println("Inserted record with ID:", sqlTodoId)
 
-	// Update the cache.
-	user, found := s.cache.Get(userId)
-	if !found {
-		fmt.Println("User not found. Creating it!")
-		user = s.cache.Set(userId, models.CacheUserModel{
-			TodoList:  cache.New[string, models.CacheTodoItemModel](),
-			ExpiresAt: time.Now().Add(30 * time.Second),
-		})
-	}
+	s.cacheInvalidateUser(userId)
 
-	todoId := uuid.New().String()
-	// user.Ttl = time.Now().Add(30 * time.Second)
-	user.TodoList.Set(todoId, models.CacheTodoItemModel{
-		Description: description,
-		CreatedAt:   time.Now(),
-		IsComplete:  false,
-	})
+	return sqlTodoId
 
-	// s.cache.Set(userId, user)
+}
+
+func (s *TodoService) UpdateTodoItem(userId string, todoId string, description string) (id string) {
+
+	// Update the database.
+	s.sqlDbTodoRepo.Update(todoId, description)
+
+	s.cacheInvalidateUser(userId)
 
 	return todoId
 
 }
 
-func (s *TodoService) setCacheNewUser(userId string) models.CacheUserModel {
+func (s *TodoService) cacheSetUser(userId string) models.CacheUserModel {
 
 	return s.cache.Set(userId, models.CacheUserModel{
 		TodoList:  cache.New[string, models.CacheTodoItemModel](),
@@ -111,9 +104,8 @@ func (s *TodoService) setCacheNewUser(userId string) models.CacheUserModel {
 
 }
 
-func (s *TodoService) setCacheUserTodo(userCache *models.CacheUserModel, todoId string, todo models.CacheTodoItemModel) {
+func (s *TodoService) cacheInvalidateUser(userId string) {
 
-	userCache.TodoList.Set(todoId, todo)
-	userCache.ExpiresAt = time.Now().Add(30 * time.Second)
+	s.cache.Delete(userId)
 
 }

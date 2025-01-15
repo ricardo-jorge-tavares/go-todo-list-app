@@ -2,43 +2,91 @@
 
 {{define "body"}}
 
-{{range .TodoList}}<div>{{ .Description }}</div>{{else}}<div><strong>no rows</strong></div>{{end}}
+<div class="container" id="page-content">
 
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card p-3 mb-3">
+        <div class="card-body">
+          <h4 class="card-title">Awesome Todo list</h4>
 
-<div class="page-content page-container" id="page-content">
-  <div class="padding">
-    <div class="row container d-flex justify-content-center">
-      <div class="col-md-12">
-        <div class="card px-3">
-          <div class="card-body">
-            <h4 class="card-title">Awesome Todo list</h4>
-            <div class="add-items d-flex"> <input type="text" class="form-control todo-list-input" placeholder="What do you need to do today?"> <button class="add btn btn-primary font-weight-bold todo-list-add-btn">Add</button> </div>
-            <div class="list-wrapper">
-              <ul class="d-flex flex-column-reverse todo-list">
-                <li>
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox"> For what reason would it be advisable. <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-                <li class="completed">
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox" checked=""> For what reason would it be advisable for me to think. <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-                <li>
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox"> it be advisable for me to think about business content? <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-                <li>
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox"> Print Statements all <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-                <li class="completed">
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox" checked=""> Call Rampbo <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-                <li>
-                  <div class="form-check"> <label class="form-check-label"> <input class="checkbox" type="checkbox"> Print bills <i class="input-helper"></i></label> </div> <i class="remove mdi mdi-close-circle-outline"></i>
-                </li>
-              </ul>
+          <ul class="p-0">
+            {{range .TodoList}}
+            <li class="d-flex border-bottom-grey py-2">
+              <div id="item-{{ .Id }}" class="align-content-center mr-auto">{{ .Description }}</div>
+              <button type="button" class="btn btn-primary btn-sm m-1"><i class="fa-solid fa-check"></i></button>
+              <button type="button" class="btn btn-primary btn-sm m-1" onclick="editItem('item-', '{{ .Id }}')"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn btn-danger btn-sm m-1"><i class="fa-solid fa-xmark"></i></button>
+            </li>
+            {{end}}
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card p-3">
+        <div class="card-body">
+          <h2 class="h4">Add new</h2>
+          <form name="loginForm" method="post" action="/app/{{ .UserId }}/" class="needs-validation" novalidate>
+            <div class="input-group mb-3">
+              <!-- <label for="formNewTodo"></label> -->
+              <input type="text" name="formMessage" class="form-control" placeholder="What do you need to do?" required="">
+              <button class="btn btn-primary" type="submit">Add item</button>
+              <div class="invalid-feedback">Please insert a todo description.</div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
 </div>
+{{end}}
+
+
+{{define "scripts"}}
+<script>
+  function editItem(prefix, itemId) {
+
+    const elementId = prefix + itemId;
+
+    // console.log(itemId);
+    // console.log($('#' + elementId).html());
+
+    const description = $('#' + elementId).html()
+
+    $('#' + elementId).html('');
+    $('<input></input>').attr({
+      'type': 'text',
+      'id': `form-${itemId}`,
+      'name': 'formItemDescription',
+      'size': '30',
+      'value': description,
+      'class': 'form-control',
+      'data-todo-element-id': elementId,
+      'data-todo-id': itemId
+    }).appendTo('#' + elementId);
+    $(`#form-${itemId}`).focus();
+
+  }
+
+  $(document).on('blur', '*[data-todo-element-id]', function () {
+    const elementId = $(this).attr('data-todo-element-id');
+    const todoId = $(this).attr('data-todo-id');
+    var description = $(this).val();
+    $.ajax({
+      type: 'post',
+      url: `todo/${todoId}/`,
+      data: { description: description },
+      success: function (response) {
+        console.log(elementId, todoId);
+        $('#' + elementId).html('');
+        $('#' + elementId).text(description);
+      }
+    });
+  });
+</script>
 {{end}}

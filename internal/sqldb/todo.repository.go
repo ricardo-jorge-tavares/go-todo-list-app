@@ -37,29 +37,29 @@ func NewToDoRepository(db *sql.DB) *SqlTodoRepository {
 	}
 }
 
-func (r *SqlTodoRepository) FindAll() ([]Todo, error) {
+// func (r *SqlTodoRepository) FindAll() ([]Todo, error) {
 
-	rows, err := r.db.Query("SELECT * FROM todo")
-	if err != nil {
-		log.Fatalf("Unable to execute the query. %v", err)
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := r.db.Query("SELECT * FROM todo")
+// 	if err != nil {
+// 		log.Fatalf("Unable to execute the query. %v", err)
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	var records []Todo
-	for rows.Next() {
-		var row Todo
-		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.CreatedAt, &row.DeletedAt)
-		if err != nil {
-			log.Fatalf("Unable to scan the row. %v", err)
-			return nil, err
-		}
-		records = append(records, row)
-	}
+// 	var records []Todo
+// 	for rows.Next() {
+// 		var row Todo
+// 		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.CreatedAt, &row.DeletedAt)
+// 		if err != nil {
+// 			log.Fatalf("Unable to scan the row. %v", err)
+// 			return nil, err
+// 		}
+// 		records = append(records, row)
+// 	}
 
-	return records, nil
+// 	return records, nil
 
-}
+// }
 
 func (r *SqlTodoRepository) FindAllByUser(userId string) ([]Todo, error) {
 
@@ -113,4 +113,14 @@ func (r *SqlTodoRepository) Insert(userId string, description string) string {
 	}
 
 	return id
+}
+
+func (r *SqlTodoRepository) Update(todoId string, description string) {
+
+	_, err := r.db.Exec("UPDATE todo SET description=$1 WHERE id=$2", description, todoId)
+	if err != nil {
+		fmt.Println("error updating", err)
+		log.Fatal(err)
+	}
+
 }

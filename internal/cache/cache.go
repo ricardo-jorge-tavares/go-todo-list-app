@@ -47,7 +47,7 @@ func (c *Cache[K, V]) Set(key K, value V) V {
 }
 
 // Remove deletes the key-value pair with the specified key from the cache.
-func (c *Cache[K, V]) Remove(key K) {
+func (c *Cache[K, V]) Delete(key K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

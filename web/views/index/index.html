@@ -2,9 +2,33 @@
 
 {{define "body"}}
 
-Welcome to the GO ToDo App
+<div class="container">
 
-<a href="/app">Go to ToDo List</a>
+  <h1 class="mb-5">Please sign in</h1>
 
+  <form name="loginForm" method="post" action="/app/login/" class="needs-validation" novalidate>
+
+    <div class="row">
+      <div class="mb-4">
+        <label for="formUser">User</label>
+        <select id="formUser" name="formUser" class="custom-select d-block w-100" required="">
+          <option value="">Choose...</option>
+          <option value="f6645494-56f5-40e4-a3f9-b6ae8935006b">Ricky Martin</option>
+          <option value="e5a91497-ae4c-48cd-a73d-1d43b34a7b9b">Dave Matthews</option>
+          <option value="064b295c-a34e-4537-9a3d-aca11177ad73">Mike Oldfield</option>
+        </select>
+        <div class="invalid-feedback">Please select a valid user.</div>
+      </div>
+    </div>
+
+    <!-- <hr class="mb-4"> -->
+
+    <button class="btn btn-primary btn-lg btn-block" type="submit">Go to the todo list</button>
+
+  </form>
+
+</div>
 
 {{end}}
+
+{{define "scripts"}}{{end}}
