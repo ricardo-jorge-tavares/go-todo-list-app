@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -28,11 +27,8 @@ func (c *appController) RegisterRoutes() *http.ServeMux {
 	r.HandleFunc("GET /{$}", appIndexRoute)
 	r.HandleFunc("GET /{userId}/", c.appListRoute)
 	r.HandleFunc("POST /{userId}/{$}", c.appNewTodoRoute)
-	r.HandleFunc("POST /{userId}/todo/{todoId}/{$}", c.appUpdateTodoRoute)
-	// r.HandleFunc("GET /{userId}/new/", c.appNewRoute)
-	// r.HandleFunc("DELETE /{id}/", appListRoute)
-
 	return r
+
 }
 
 func appLoginRoute(w http.ResponseWriter, r *http.Request) {
@@ -67,8 +63,9 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 	type todoListType struct {
 		Id          string
 		Description string
-		CreatedAt   time.Time
 		IsComplete  bool
+		Rank        int
+		CreatedAt   time.Time
 	}
 
 	viewData := struct {
@@ -80,7 +77,7 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 
 	list := c.todoService.GetUserTodoList(userId)
 	for _, item := range list {
-		viewData.TodoList = append(viewData.TodoList, todoListType{item.Id, item.Description, item.CreatedAt, item.IsComplete})
+		viewData.TodoList = append(viewData.TodoList, todoListType{item.Id, item.Description, item.IsComplete, item.Rank, item.CreatedAt})
 	}
 
 	t, _ := helpers.ParseView("web/views/app/list.html")
@@ -109,34 +106,5 @@ func (c *appController) appNewTodoRoute(w http.ResponseWriter, r *http.Request) 
 	c.todoService.AddTodoItem(userId, description)
 
 	http.Redirect(w, r, fmt.Sprintf("/app/%s/", userId), http.StatusFound)
-
-}
-
-func (c *appController) appUpdateTodoRoute(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("/app/{userId}/todo/{todoId} route served")
-
-	userId := r.PathValue("userId")
-	todoId := r.PathValue("todoId")
-	fmt.Println(userId, todoId)
-
-	r.ParseForm()
-	description := r.FormValue("description")
-	if description == "" {
-		t, _ := helpers.ParseView("web/views/theme/error.html")
-		err := t.Execute(w, "description not supplied when trying to update new Todo item")
-		helpers.CheckError(err)
-		// return
-	}
-
-	c.todoService.UpdateTodoItem(userId, todoId, description)
-
-	var returnData = struct {
-		Id string `json:"id"`
-	}{
-		Id: todoId,
-	}
-	json.NewEncoder(w).Encode(returnData)
-	// http.Redirect(w, r, fmt.Sprintf("/app/%s/", userId), http.StatusFound)
 
 }

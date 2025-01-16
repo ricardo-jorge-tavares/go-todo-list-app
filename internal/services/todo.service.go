@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"local.com/todo-list-app/internal/cache"
@@ -20,6 +21,7 @@ type GetUserTodoListResponse struct {
 	Id          string
 	Description string
 	IsComplete  bool
+	Rank        int
 	CreatedAt   time.Time
 }
 
@@ -27,7 +29,8 @@ type GetUserTodoListResponse struct {
 type TodoServiceInterface interface {
 	GetUserTodoList(userId string) []GetUserTodoListResponse
 	AddTodoItem(userId string, description string) (id string)
-	UpdateTodoItem(userId string, todoId string, description string) (id string)
+	UpdateTodoItemDescription(userId string, todoId string, description string) (id string)
+	UpdateTodoItemRank(userId string, todoId string, rank int) (id string)
 }
 
 // Functions.
@@ -46,8 +49,13 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 	if found && user.ExpiresAt.After(time.Now()) {
 		fmt.Println("User found and valid. Returning it!")
 		for k, v := range user.TodoList.List() {
-			r = append(r, GetUserTodoListResponse{Id: k, Description: v.Description, CreatedAt: v.CreatedAt, IsComplete: v.IsComplete})
+			r = append(r, GetUserTodoListResponse{Id: k, Description: v.Description, IsComplete: v.IsComplete, Rank: v.Rank, CreatedAt: v.CreatedAt})
 		}
+
+		sort.Slice(r, func(i, j int) bool {
+			return r[i].Rank < r[j].Rank
+		})
+
 		return r
 	}
 
@@ -60,11 +68,12 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 
 		user.TodoList.Set(item.Id, models.CacheTodoItemModel{
 			Description: item.Description,
-			CreatedAt:   item.CreatedAt,
 			IsComplete:  item.IsComplete,
+			Rank:        item.Rank,
+			CreatedAt:   item.CreatedAt,
 		})
 
-		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, CreatedAt: item.CreatedAt, IsComplete: item.IsComplete})
+		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, IsComplete: item.IsComplete, Rank: item.Rank, CreatedAt: item.CreatedAt})
 
 	}
 
@@ -84,10 +93,21 @@ func (s *TodoService) AddTodoItem(userId string, description string) (id string)
 
 }
 
-func (s *TodoService) UpdateTodoItem(userId string, todoId string, description string) (id string) {
+func (s *TodoService) UpdateTodoItemDescription(userId string, todoId string, description string) (id string) {
 
 	// Update the database.
 	s.sqlDbTodoRepo.Update(todoId, description)
+
+	s.cacheInvalidateUser(userId)
+
+	return todoId
+
+}
+
+func (s *TodoService) UpdateTodoItemRank(userId string, todoId string, rank int) (id string) {
+
+	// Update the database.
+	s.sqlDbTodoRepo.UpdateUserRank(userId, todoId, rank)
 
 	s.cacheInvalidateUser(userId)
 

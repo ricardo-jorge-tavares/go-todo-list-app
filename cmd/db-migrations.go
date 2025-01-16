@@ -16,9 +16,10 @@ func createTodoTable(db *sql.DB) {
 	_, err = db.Exec(`
 		CREATE TABLE todo (
 			id VARCHAR(36) NOT NULL PRIMARY KEY,
-			user_id VARCHAR(36) NULL,
+			user_id VARCHAR(36) NOT NULL,
 			description TEXT NOT NULL,
 			is_complete BOOLEAN NOT NULL DEFAULT FALSE,
+			rank INT NOT NULL,
 			created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			deleted_at TIMESTAMP(3)
 		);`)

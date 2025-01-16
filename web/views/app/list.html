@@ -6,23 +6,33 @@
 
   <div class="row">
     <div class="col-md-12">
+
+      {{$todoListLength := len .TodoList}}
+
+      {{if eq $todoListLength 0}}
+      <div class="alert alert-primary" role="alert">
+        You have no created tasks! Create your first below!
+      </div>
+      {{else}}
       <div class="card p-3 mb-3">
         <div class="card-body">
           <h4 class="card-title">Awesome Todo list</h4>
-
           <ul class="p-0">
-            {{range .TodoList}}
+            {{range $i, $item := .TodoList}}
             <li class="d-flex border-bottom-grey py-2">
-              <div id="item-{{ .Id }}" class="align-content-center mr-auto">{{ .Description }}</div>
+              <div id="item-{{ $item.Id }}" class="align-content-center mr-auto">{{ $item.Description }}</div>
+              <button type="button" data-rank-button="up" class="btn btn-outline-primary btn-sm m-1" onclick="editItemRank('{{ $item.Id }}', {{ $item.Rank }}, 'decrease', {{$todoListLength}})"><i class="fa-solid fa-arrow-up"></i></button>
+              <button type="button" data-rank-button="down" class="btn btn-outline-primary btn-sm m-1" onclick="editItemRank('{{ $item.Id }}', {{ $item.Rank }}, 'increase', {{$todoListLength}})"><i class="fa-solid fa-arrow-down"></i></button>
               <button type="button" class="btn btn-primary btn-sm m-1"><i class="fa-solid fa-check"></i></button>
-              <button type="button" class="btn btn-primary btn-sm m-1" onclick="editItem('item-', '{{ .Id }}')"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn btn-primary btn-sm m-1" onclick="editItem('item-', '{{ $item.Id }}')"><i class="fa-solid fa-pen"></i></button>
               <button type="button" class="btn btn-danger btn-sm m-1"><i class="fa-solid fa-xmark"></i></button>
             </li>
             {{end}}
           </ul>
-
         </div>
       </div>
+      {{end}}
+
     </div>
   </div>
 
@@ -33,7 +43,6 @@
           <h2 class="h4">Add new</h2>
           <form name="loginForm" method="post" action="/app/{{ .UserId }}/" class="needs-validation" novalidate>
             <div class="input-group mb-3">
-              <!-- <label for="formNewTodo"></label> -->
               <input type="text" name="formMessage" class="form-control" placeholder="What do you need to do?" required="">
               <button class="btn btn-primary" type="submit">Add item</button>
               <div class="invalid-feedback">Please insert a todo description.</div>
@@ -43,20 +52,18 @@
       </div>
     </div>
   </div>
+
 </div>
 {{end}}
 
 
 {{define "scripts"}}
 <script>
+
   function editItem(prefix, itemId) {
 
     const elementId = prefix + itemId;
-
-    // console.log(itemId);
-    // console.log($('#' + elementId).html());
-
-    const description = $('#' + elementId).html()
+    const description = $('#' + elementId).html();
 
     $('#' + elementId).html('');
     $('<input></input>').attr({
@@ -79,14 +86,46 @@
     var description = $(this).val();
     $.ajax({
       type: 'post',
-      url: `todo/${todoId}/`,
-      data: { description: description },
+      url: `/api/{{ .UserId }}/todo/${todoId}/description/`,
+      data: JSON.stringify({ description: description }),
       success: function (response) {
-        console.log(elementId, todoId);
+        // console.log(elementId, todoId);
         $('#' + elementId).html('');
         $('#' + elementId).text(description);
       }
     });
   });
+
+  function editItemRank(todoId, currentRank, action, listLen) {
+
+    // console.log(todoId, currentRank, action);
+
+    let rank = 0;
+    if (action === 'increase') {
+      rank = currentRank + 1;
+      if (rank > listLen) {
+        console.log("Invalid rank");
+        return;
+      }
+    } else if (action === 'decrease') {
+      rank = currentRank - 1;
+      if (rank <= 0) {
+        console.log("Invalid rank");
+        return;
+      }
+    }
+
+    $.ajax({
+      type: 'post',
+      url: `/api/{{ .UserId }}/todo/${todoId}/rank/`,
+      data: JSON.stringify({ rank: rank }),
+      success: function (response) {
+        console.log('Response: ' + response);
+        location.reload();
+      }
+    });
+
+  }
+
 </script>
 {{end}}

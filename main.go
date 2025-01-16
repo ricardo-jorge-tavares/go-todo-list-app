@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/joho/godotenv"
+	"local.com/todo-list-app/api"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/helpers"
 	"local.com/todo-list-app/internal/models"
@@ -42,6 +43,8 @@ func main() {
 	router.HandleFunc("GET /{$}", web.IndexRoute)
 
 	// Web (UI) routes.
+	apiRouter := api.NewApiController(todoService).RegisterRoutes()
+	router.Handle("/api/", http.StripPrefix("/api", apiRouter))
 	appRouter := web.NewAppController(todoService).RegisterRoutes()
 	router.Handle("/app/", http.StripPrefix("/app", appRouter))
 
