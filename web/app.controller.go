@@ -63,7 +63,7 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 	type todoListType struct {
 		Id          string
 		Description string
-		IsComplete  bool
+		IsCompleted bool
 		Rank        int
 		CreatedAt   time.Time
 	}
@@ -77,7 +77,7 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 
 	list := c.todoService.GetUserTodoList(userId)
 	for _, item := range list {
-		viewData.TodoList = append(viewData.TodoList, todoListType{item.Id, item.Description, item.IsComplete, item.Rank, item.CreatedAt})
+		viewData.TodoList = append(viewData.TodoList, todoListType{item.Id, item.Description, item.IsCompleted, item.Rank, item.CreatedAt})
 	}
 
 	t, _ := helpers.ParseView("web/views/app/list.html")

@@ -20,7 +20,7 @@ type TodoService struct {
 type GetUserTodoListResponse struct {
 	Id          string
 	Description string
-	IsComplete  bool
+	IsCompleted bool
 	Rank        int
 	CreatedAt   time.Time
 }
@@ -31,6 +31,8 @@ type TodoServiceInterface interface {
 	AddTodoItem(userId string, description string) (id string)
 	UpdateTodoItemDescription(userId string, todoId string, description string) (id string)
 	UpdateTodoItemRank(userId string, todoId string, rank int) (id string)
+	UpdateTodoItemIsCompleted(userId string, todoId string) (id string)
+	DeleteTodoItem(userId string, todoId string) (id string)
 }
 
 // Functions.
@@ -49,7 +51,7 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 	if found && user.ExpiresAt.After(time.Now()) {
 		fmt.Println("User found and valid. Returning it!")
 		for k, v := range user.TodoList.List() {
-			r = append(r, GetUserTodoListResponse{Id: k, Description: v.Description, IsComplete: v.IsComplete, Rank: v.Rank, CreatedAt: v.CreatedAt})
+			r = append(r, GetUserTodoListResponse{Id: k, Description: v.Description, IsCompleted: v.IsCompleted, Rank: v.Rank, CreatedAt: v.CreatedAt})
 		}
 
 		sort.Slice(r, func(i, j int) bool {
@@ -60,7 +62,7 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 	}
 
 	fmt.Println("Fetching info From DB")
-	rows, _ := s.sqlDbTodoRepo.FindAllByUser(userId)
+	rows, _ := s.sqlDbTodoRepo.FindUserItems(userId)
 
 	user = s.cacheSetUser(userId)
 
@@ -68,12 +70,12 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 
 		user.TodoList.Set(item.Id, models.CacheTodoItemModel{
 			Description: item.Description,
-			IsComplete:  item.IsComplete,
+			IsCompleted: item.IsCompleted,
 			Rank:        item.Rank,
 			CreatedAt:   item.CreatedAt,
 		})
 
-		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, IsComplete: item.IsComplete, Rank: item.Rank, CreatedAt: item.CreatedAt})
+		r = append(r, GetUserTodoListResponse{Id: item.Id, Description: item.Description, IsCompleted: item.IsCompleted, Rank: item.Rank, CreatedAt: item.CreatedAt})
 
 	}
 
@@ -83,8 +85,7 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 
 func (s *TodoService) AddTodoItem(userId string, description string) (id string) {
 
-	// Insert into the database.
-	sqlTodoId := s.sqlDbTodoRepo.Insert(userId, description)
+	sqlTodoId := s.sqlDbTodoRepo.InsertItem(userId, description)
 	fmt.Println("Inserted record with ID:", sqlTodoId)
 
 	s.cacheInvalidateUser(userId)
@@ -95,8 +96,7 @@ func (s *TodoService) AddTodoItem(userId string, description string) (id string)
 
 func (s *TodoService) UpdateTodoItemDescription(userId string, todoId string, description string) (id string) {
 
-	// Update the database.
-	s.sqlDbTodoRepo.Update(todoId, description)
+	s.sqlDbTodoRepo.UpdateItemDescription(todoId, description)
 
 	s.cacheInvalidateUser(userId)
 
@@ -106,8 +106,27 @@ func (s *TodoService) UpdateTodoItemDescription(userId string, todoId string, de
 
 func (s *TodoService) UpdateTodoItemRank(userId string, todoId string, rank int) (id string) {
 
-	// Update the database.
-	s.sqlDbTodoRepo.UpdateUserRank(userId, todoId, rank)
+	s.sqlDbTodoRepo.UpdateItemRank(userId, todoId, rank)
+
+	s.cacheInvalidateUser(userId)
+
+	return todoId
+
+}
+
+func (s *TodoService) UpdateTodoItemIsCompleted(userId string, todoId string) (id string) {
+
+	s.sqlDbTodoRepo.UpdateItemIsCompleted(todoId)
+
+	s.cacheInvalidateUser(userId)
+
+	return todoId
+
+}
+
+func (s *TodoService) DeleteTodoItem(userId string, todoId string) (id string) {
+
+	s.sqlDbTodoRepo.DeleteItem(todoId)
 
 	s.cacheInvalidateUser(userId)
 

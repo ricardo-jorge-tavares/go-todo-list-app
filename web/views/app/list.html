@@ -20,12 +20,12 @@
           <ul class="p-0">
             {{range $i, $item := .TodoList}}
             <li class="d-flex border-bottom-grey py-2">
-              <div id="item-{{ $item.Id }}" class="align-content-center mr-auto">{{ $item.Description }}</div>
+              <div id="item-{{ $item.Id }}" class="align-content-center mr-auto{{if eq $item.IsCompleted true}} text-decoration-line-line-through{{end}}">{{ $item.Description }}</div>
               <button type="button" data-rank-button="up" class="btn btn-outline-primary btn-sm m-1" onclick="editItemRank('{{ $item.Id }}', {{ $item.Rank }}, 'decrease', {{$todoListLength}})"><i class="fa-solid fa-arrow-up"></i></button>
               <button type="button" data-rank-button="down" class="btn btn-outline-primary btn-sm m-1" onclick="editItemRank('{{ $item.Id }}', {{ $item.Rank }}, 'increase', {{$todoListLength}})"><i class="fa-solid fa-arrow-down"></i></button>
-              <button type="button" class="btn btn-primary btn-sm m-1"><i class="fa-solid fa-check"></i></button>
-              <button type="button" class="btn btn-primary btn-sm m-1" onclick="editItem('item-', '{{ $item.Id }}')"><i class="fa-solid fa-pen"></i></button>
-              <button type="button" class="btn btn-danger btn-sm m-1"><i class="fa-solid fa-xmark"></i></button>
+              <button type="button" class="btn btn-primary btn-sm m-1" onclick="markCompleteItem('{{ $item.Id }}')"><i class="fa-solid fa-check"></i></button>
+              <button type="button" class="btn btn-primary btn-sm m-1" onclick="editItem('item-', '{{ $item.Id }}')"{{if eq $item.IsCompleted true}} disabled{{end}}><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn btn-danger btn-sm m-1" onclick="deleteItem('{{ $item.Id }}')"><i class="fa-solid fa-xmark"></i></button>
             </li>
             {{end}}
           </ul>
@@ -95,6 +95,33 @@
       }
     });
   });
+
+  function markCompleteItem(todoId) {
+
+    $.ajax({
+      type: 'post',
+      url: `/api/{{ .UserId }}/todo/${todoId}/completed/`,
+      success: function (response) {
+        console.log('Response: ' + response);
+        location.reload();
+      }
+    });
+
+  }
+
+  function deleteItem(todoId, currentRank, action, listLen) {
+
+    $.ajax({
+      type: 'delete',
+      url: `/api/{{ .UserId }}/todo/${todoId}/`,
+      success: function (response) {
+        console.log('Response: ' + response);
+        location.reload();
+      }
+    });
+
+  }
+
 
   function editItemRank(todoId, currentRank, action, listLen) {
 

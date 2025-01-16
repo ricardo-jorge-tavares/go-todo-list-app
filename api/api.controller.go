@@ -21,13 +21,14 @@ func NewApiController(s services.TodoServiceInterface) *apiController {
 func (c *apiController) RegisterRoutes() *http.ServeMux {
 
 	r := http.NewServeMux()
-	r.HandleFunc("POST /{userId}/todo/{todoId}/description/{$}", c.apiUpdateDescription)
-	r.HandleFunc("POST /{userId}/todo/{todoId}/rank/{$}", c.apiUpdateRank)
-
+	r.HandleFunc("POST /{userId}/todo/{todoId}/description/{$}", c.apiUpdateTodoDescription)
+	r.HandleFunc("POST /{userId}/todo/{todoId}/rank/{$}", c.apiUpdateTodoRank)
+	r.HandleFunc("POST /{userId}/todo/{todoId}/completed/{$}", c.apiUpdateTodoIsCompleted)
+	r.HandleFunc("DELETE /{userId}/todo/{todoId}/{$}", c.apiDeleteTodo)
 	return r
 }
 
-func (c *apiController) apiUpdateDescription(w http.ResponseWriter, r *http.Request) {
+func (c *apiController) apiUpdateTodoDescription(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/app/{userId}/todo/{todoId}/description route served")
 
@@ -51,7 +52,7 @@ func (c *apiController) apiUpdateDescription(w http.ResponseWriter, r *http.Requ
 
 }
 
-func (c *apiController) apiUpdateRank(w http.ResponseWriter, r *http.Request) {
+func (c *apiController) apiUpdateTodoRank(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/api/{userId}/todo/{todoId}/rank route served")
 
@@ -72,6 +73,42 @@ func (c *apiController) apiUpdateRank(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.todoService.UpdateTodoItemRank(userId, todoId, inputData.Rank)
+
+	json.NewEncoder(w).Encode(returnData)
+
+}
+
+func (c *apiController) apiUpdateTodoIsCompleted(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.PathValue("userId")
+	todoId := r.PathValue("todoId")
+
+	var returnData = struct {
+		Id           string `json:"id"`
+		ErrorMessage string `json:"error"`
+	}{
+		Id: todoId,
+	}
+
+	c.todoService.UpdateTodoItemIsCompleted(userId, todoId)
+
+	json.NewEncoder(w).Encode(returnData)
+
+}
+
+func (c *apiController) apiDeleteTodo(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.PathValue("userId")
+	todoId := r.PathValue("todoId")
+
+	var returnData = struct {
+		Id           string `json:"id"`
+		ErrorMessage string `json:"error"`
+	}{
+		Id: todoId,
+	}
+
+	c.todoService.DeleteTodoItem(userId, todoId)
 
 	json.NewEncoder(w).Encode(returnData)
 

@@ -13,7 +13,7 @@ type CacheUserModel struct {
 
 type CacheTodoItemModel struct {
 	Description string
-	IsComplete  bool
+	IsCompleted bool
 	Rank        int
 	CreatedAt   time.Time
 }

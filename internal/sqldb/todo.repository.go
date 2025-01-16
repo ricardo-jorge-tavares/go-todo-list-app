@@ -13,7 +13,7 @@ type Todo struct {
 	Id          string       `json:"id"`
 	UserId      string       `json:"userId"`
 	Description string       `json:"description"`
-	IsComplete  bool         `json:"isComplete"`
+	IsCompleted bool         `json:"isCompleted"`
 	Rank        int          `json:"rank"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	DeletedAt   sql.NullTime `json:"deletedAt"`
@@ -62,9 +62,9 @@ func NewToDoRepository(db *sql.DB) *SqlTodoRepository {
 
 // }
 
-func (r *SqlTodoRepository) FindAllByUser(userId string) ([]Todo, error) {
+func (r *SqlTodoRepository) FindUserItems(userId string) ([]Todo, error) {
 
-	rows, err := r.db.Query("SELECT id, user_id, description, is_complete, rank, created_at, deleted_at FROM todo WHERE user_id=$1 ORDER BY rank", userId)
+	rows, err := r.db.Query("SELECT id, user_id, description, is_completed, rank, created_at, deleted_at FROM todo WHERE user_id=$1 ORDER BY rank", userId)
 	if err != nil {
 		log.Fatalf("Unable to execute the query. %v", err)
 		return nil, err
@@ -74,7 +74,7 @@ func (r *SqlTodoRepository) FindAllByUser(userId string) ([]Todo, error) {
 	var records []Todo
 	for rows.Next() {
 		var row Todo
-		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.Rank, &row.CreatedAt, &row.DeletedAt)
+		err := rows.Scan(&row.Id, &row.UserId, &row.Description, &row.IsCompleted, &row.Rank, &row.CreatedAt, &row.DeletedAt)
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
 			return nil, err
@@ -86,30 +86,30 @@ func (r *SqlTodoRepository) FindAllByUser(userId string) ([]Todo, error) {
 }
 
 // FindById ..
-func (r *SqlTodoRepository) FindByTodoId(id string) (Todo, error) {
+// func (r *SqlTodoRepository) FindByTodoId(id string) (Todo, error) {
 
-	var row = Todo{}
-	err := r.db.QueryRow("SELECT * FROM todo WHERE id=$1", id).Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.Rank, &row.CreatedAt, &row.DeletedAt)
+// 	var row = Todo{}
+// 	err := r.db.QueryRow("SELECT * FROM todo WHERE id=$1", id).Scan(&row.Id, &row.UserId, &row.Description, &row.IsComplete, &row.Rank, &row.CreatedAt, &row.DeletedAt)
 
-	switch err {
-	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
-		return row, nil
-	case nil:
-		return row, nil
-	default:
-		log.Fatalf("Unable to scan the row. %v", err)
-	}
+// 	switch err {
+// 	case sql.ErrNoRows:
+// 		fmt.Println("No rows were returned!")
+// 		return row, nil
+// 	case nil:
+// 		return row, nil
+// 	default:
+// 		log.Fatalf("Unable to scan the row. %v", err)
+// 	}
 
-	return row, nil
-}
+// 	return row, nil
+// }
 
-func (r *SqlTodoRepository) Insert(userId string, description string) string {
+func (r *SqlTodoRepository) InsertItem(userId string, description string) string {
 
 	id := uuid.New().String()
 
 	err := r.db.QueryRow(`
-		INSERT INTO todo (id, user_id, description, is_complete, rank, created_at)
+		INSERT INTO todo (id, user_id, description, is_completed, rank, created_at)
 		SELECT $1, $2, $3, $4, (SELECT COUNT(*) + 1 FROM todo WHERE user_id = $5), $6
 		RETURNING id`, id, userId, description, false, userId, time.Now()).Scan(&id)
 
@@ -120,7 +120,7 @@ func (r *SqlTodoRepository) Insert(userId string, description string) string {
 	return id
 }
 
-func (r *SqlTodoRepository) Update(todoId string, description string) {
+func (r *SqlTodoRepository) UpdateItemDescription(todoId string, description string) {
 
 	_, err := r.db.Exec("UPDATE todo SET description=$1 WHERE id=$2", description, todoId)
 	if err != nil {
@@ -130,7 +130,7 @@ func (r *SqlTodoRepository) Update(todoId string, description string) {
 
 }
 
-func (r *SqlTodoRepository) UpdateUserRank(userId string, todoId string, toRank int) {
+func (r *SqlTodoRepository) UpdateItemRank(userId string, todoId string, toRank int) {
 
 	fmt.Println("updateRank", userId, todoId, toRank)
 
@@ -152,10 +152,30 @@ func (r *SqlTodoRepository) UpdateUserRank(userId string, todoId string, toRank 
 			END)
 		FROM todo p
 		LEFT JOIN q_sorted s ON p.id = s.id
-		WHERE t1.id = p.id`, userId, todoId, toRank)
+		WHERE p.user_id = $1 AND t1.id = p.id`, userId, todoId, toRank)
 
 	if err != nil {
 		fmt.Println("error updating", err)
+		log.Fatal(err)
+	}
+
+}
+
+func (r *SqlTodoRepository) UpdateItemIsCompleted(todoId string) {
+
+	_, err := r.db.Exec("UPDATE todo SET is_completed = NOT is_completed WHERE id=$1", todoId)
+	if err != nil {
+		fmt.Println("error updating", err)
+		log.Fatal(err)
+	}
+
+}
+
+func (r *SqlTodoRepository) DeleteItem(todoId string) {
+
+	_, err := r.db.Exec("DELETE FROM todo WHERE id=$1", todoId)
+	if err != nil {
+		fmt.Println("error deleting", err)
 		log.Fatal(err)
 	}
 
