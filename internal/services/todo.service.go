@@ -18,11 +18,11 @@ type TodoService struct {
 }
 
 type GetUserTodoListResponse struct {
-	Id          string
-	Description string
-	IsCompleted bool
-	Rank        int
-	CreatedAt   time.Time
+	Id          string    `json:"id"`
+	Description string    `json:"description"`
+	IsCompleted bool      `json:"isCompleted"`
+	Rank        int       `json:"rank"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 // Interfaces.

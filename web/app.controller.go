@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/middlewares"
 	"local.com/todo-list-app/internal/services"
 )
 
@@ -23,10 +24,21 @@ func NewAppController(s services.TodoServiceInterface) *appController {
 func (c *appController) RegisterRoutes() *http.ServeMux {
 
 	r := http.NewServeMux()
+
+	// Unauthentication routes.
 	r.HandleFunc("POST /login/{$}", appLoginRoute)
-	r.HandleFunc("GET /{$}", appIndexRoute)
-	r.HandleFunc("GET /{userId}/", c.appListRoute)
-	r.HandleFunc("POST /{userId}/{$}", c.appNewTodoRoute)
+
+	var handlers = map[string]http.HandlerFunc{
+		"GET /{$}":           appIndexRoute,
+		"GET /{userId}/":     c.appListUserTodos,
+		"POST /{userId}/{$}": c.appNewTodo,
+	}
+
+	// Apply middewares at a router level (so that middleware can access path params)
+	for pattern, handler := range handlers {
+		r.HandleFunc(pattern, middlewares.AuthMiddleware(handler))
+	}
+
 	return r
 
 }
@@ -53,12 +65,11 @@ func appIndexRoute(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "app/user123/", http.StatusFound)
 }
 
-func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
+func (c *appController) appListUserTodos(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/app/{userId} route served")
 
 	userId := r.PathValue("userId")
-	fmt.Println(userId)
 
 	type todoListType struct {
 		Id          string
@@ -86,7 +97,7 @@ func (c *appController) appListRoute(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c *appController) appNewTodoRoute(w http.ResponseWriter, r *http.Request) {
+func (c *appController) appNewTodo(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/app/{userId}/new route served")
 
