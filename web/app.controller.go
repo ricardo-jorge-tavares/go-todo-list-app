@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"local.com/todo-list-app/internal/helpers"
-	"local.com/todo-list-app/internal/middlewares"
+	"local.com/todo-list-app/internal/middleware"
+	"local.com/todo-list-app/internal/models"
 	"local.com/todo-list-app/internal/services"
 )
 
@@ -36,7 +37,7 @@ func (c *appController) RegisterRoutes() *http.ServeMux {
 
 	// Apply middewares at a router level (so that middleware can access path params)
 	for pattern, handler := range handlers {
-		r.HandleFunc(pattern, middlewares.AuthMiddleware(handler))
+		r.HandleFunc(pattern, middleware.AuthMiddleware(handler))
 	}
 
 	return r
@@ -67,9 +68,9 @@ func appIndexRoute(w http.ResponseWriter, r *http.Request) {
 
 func (c *appController) appListUserTodos(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("/app/{userId} route served")
+	userContext := models.GetContextUser(r.Context())
 
-	userId := r.PathValue("userId")
+	fmt.Println("/app/{userId} route served")
 
 	type todoListType struct {
 		Id          string
@@ -80,13 +81,13 @@ func (c *appController) appListUserTodos(w http.ResponseWriter, r *http.Request)
 	}
 
 	viewData := struct {
-		UserId   string
+		User     models.UserContext
 		TodoList []todoListType
 	}{
-		UserId: userId,
+		User: *userContext,
 	}
 
-	list := c.todoService.GetUserTodoList(userId)
+	list := c.todoService.GetUserTodoList(userContext.Id)
 	for _, item := range list {
 		viewData.TodoList = append(viewData.TodoList, todoListType{item.Id, item.Description, item.IsCompleted, item.Rank, item.CreatedAt})
 	}

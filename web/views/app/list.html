@@ -16,7 +16,7 @@
       {{else}}
       <div class="card p-3 mb-3">
         <div class="card-body">
-          <h4 class="card-title">Awesome Todo list</h4>
+          <h4 class="card-title">{{ .User.Name }} todo's</h4>
           <ul class="p-0">
             {{range $i, $item := .TodoList}}
             <li class="d-flex border-bottom-grey py-2">
@@ -41,7 +41,7 @@
       <div class="card p-3">
         <div class="card-body">
           <h2 class="h4">Add new</h2>
-          <form name="loginForm" method="post" action="/app/{{ .UserId }}/" class="needs-validation" novalidate>
+          <form name="loginForm" method="post" action="/app/{{ .User.Id }}/" class="needs-validation" novalidate>
             <div class="input-group mb-3">
               <input type="text" name="formMessage" class="form-control" placeholder="What do you need to do?" required="">
               <button class="btn btn-primary" type="submit">Add item</button>
@@ -86,7 +86,7 @@
     var description = $(this).val();
     $.ajax({
       type: 'post',
-      url: `/api/{{ .UserId }}/todo/${todoId}/description/`,
+      url: `/api/{{ .User.Id }}/todo/${todoId}/description/`,
       data: JSON.stringify({ description: description }),
       success: function (response) {
         // console.log(elementId, todoId);
@@ -100,7 +100,7 @@
 
     $.ajax({
       type: 'post',
-      url: `/api/{{ .UserId }}/todo/${todoId}/completed/`,
+      url: `/api/{{ .User.Id }}/todo/${todoId}/completed/`,
       success: function (response) {
         console.log('Response: ' + response);
         location.reload();
@@ -113,7 +113,7 @@
 
     $.ajax({
       type: 'delete',
-      url: `/api/{{ .UserId }}/todo/${todoId}/`,
+      url: `/api/{{ .User.Id }}/todo/${todoId}/`,
       success: function (response) {
         console.log('Response: ' + response);
         location.reload();
@@ -144,7 +144,7 @@
 
     $.ajax({
       type: 'post',
-      url: `/api/{{ .UserId }}/todo/${todoId}/rank/`,
+      url: `/api/{{ .User.Id }}/todo/${todoId}/rank/`,
       data: JSON.stringify({ rank: rank }),
       success: function (response) {
         console.log('Response: ' + response);

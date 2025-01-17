@@ -1,4 +1,4 @@
-package middlewares
+package middleware
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 
 	"local.com/todo-list-app/internal/config"
 	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/models"
 )
 
 func AuthMiddleware(next http.Handler) http.HandlerFunc {
@@ -15,7 +16,9 @@ func AuthMiddleware(next http.Handler) http.HandlerFunc {
 
 		contentType := r.Header.Get("Content-Type")
 
-		userName := config.ValidUsers[r.PathValue("userId")]
+		userId := r.PathValue("userId")
+		userName := config.ValidUsers[userId]
+
 		if userName == "" {
 
 			if contentType == "application/json" {
@@ -24,7 +27,6 @@ func AuthMiddleware(next http.Handler) http.HandlerFunc {
 					Error string `json:"error"`
 				}{Error: "Invalid user!"}
 
-				w.Header().Set("Content-Type", contentType)
 				w.WriteHeader(http.StatusPreconditionFailed)
 				json.NewEncoder(w).Encode(returnData)
 
@@ -42,10 +44,10 @@ func AuthMiddleware(next http.Handler) http.HandlerFunc {
 
 		}
 
-		// fmt.Println("Before %s", r.URL.String())
-		w.Header().Set("Content-Type", contentType)
-		next.ServeHTTP(w, r)
-		// fmt.Println("After %s", r.URL.String())
+		userContext := models.UserContext{Id: userId, Name: userName}
+
+		rcopy := r.WithContext(models.SetContextUser(r.Context(), &userContext))
+		next.ServeHTTP(w, rcopy)
 
 	})
 

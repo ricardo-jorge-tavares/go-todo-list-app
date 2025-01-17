@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"local.com/todo-list-app/internal/helpers"
-	"local.com/todo-list-app/internal/middlewares"
+	"local.com/todo-list-app/internal/middleware"
 	"local.com/todo-list-app/internal/services"
 )
 
@@ -34,7 +34,7 @@ func (c *apiController) RegisterRoutes() *http.ServeMux {
 
 	// Apply middewares at a router level (so that middleware can access path params)
 	for pattern, handler := range handlers {
-		r.HandleFunc(pattern, middlewares.AuthMiddleware(handler))
+		r.HandleFunc(pattern, middleware.AuthMiddleware(handler))
 	}
 
 	return r

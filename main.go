@@ -8,6 +8,7 @@ import (
 	"local.com/todo-list-app/api"
 	"local.com/todo-list-app/internal/cache"
 	"local.com/todo-list-app/internal/helpers"
+	"local.com/todo-list-app/internal/middleware"
 	"local.com/todo-list-app/internal/models"
 	"local.com/todo-list-app/internal/services"
 	"local.com/todo-list-app/internal/sqldb"
@@ -20,7 +21,7 @@ func main() {
 	err := godotenv.Load()
 	helpers.CheckError(err)
 
-	// Connect to the database and initialize repositories.
+	// Connect to the database.
 	db := sqldb.ConnectDB()
 	defer db.Close()
 
@@ -30,6 +31,7 @@ func main() {
 	// Create a new Cache instance.
 	userCache := cache.New[string, models.CacheUserModel]()
 
+	// Initialize services.
 	todoService := services.TodoServiceInit(userCache, sqldbTodoRepository)
 
 	// Create a new ServeMux instance.
@@ -42,9 +44,10 @@ func main() {
 	// Index route.
 	router.HandleFunc("GET /{$}", web.IndexRoute)
 
-	// Web (UI) routes.
+	// API routes.
 	apiRouter := api.NewApiController(todoService).RegisterRoutes()
-	router.Handle("/api/", http.StripPrefix("/api", apiRouter))
+	router.Handle("/api/", http.StripPrefix("/api", middleware.ApiMiddleware(apiRouter)))
+	// Web (UI) routes.
 	appRouter := web.NewAppController(todoService).RegisterRoutes()
 	router.Handle("/app/", http.StripPrefix("/app", appRouter))
 
