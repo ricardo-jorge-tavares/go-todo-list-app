@@ -32,7 +32,7 @@ func main() {
 	err := godotenv.Load()
 	helpers.CheckError(err)
 
-	db := sqldb.ConnectDB()
+	db := sqldb.ConnectDB("")
 
 	createTodoTable(db)
 

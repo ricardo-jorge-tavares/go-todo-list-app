@@ -12,13 +12,14 @@ This project is prepared to run locally using additional layers (PostgreSQL DB) 
 Make a copy of the file ".env.example", and call it ".env" changing any variable as needed.
 
 ### 2. Start local DB server through docker and docker compose
+This will create 2 containers. 1 with a PRD DB and another to serve tests, running on a different port.
 ```bash
 $ docker-compose -f .docker/docker-compose.yml up
 ```
 
 ### 3. Configure your virtual environment
 ``` bash
-$ go ./cmd/db-migrations.go # This will create tables on the DB.
+$ go ./cmd/db-migrations.go # This will create tables on the PRD DB.
 ```
 
 Everything will be installed and ready to run.
@@ -34,6 +35,13 @@ $ docker-compose -f .docker/docker-compose.yml up
 ```bash
 $ go run ./main.go
 ```
+
+### 3. Run integration tests
+```bash
+$ go test -v -run="^TestIntegrationSuite$"
+```
+
+
 
 Open your brower at http://localhost:8080 or you can use the available API at http://localhost:8080/api (sorry, no API documentation exists yet!)
 

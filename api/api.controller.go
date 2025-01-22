@@ -7,6 +7,7 @@ import (
 
 	"local.com/todo-list-app/internal/helpers"
 	"local.com/todo-list-app/internal/middleware"
+	"local.com/todo-list-app/internal/models"
 	"local.com/todo-list-app/internal/services"
 )
 
@@ -25,7 +26,8 @@ func (c *apiController) RegisterRoutes() *http.ServeMux {
 	r := http.NewServeMux()
 
 	var handlers = map[string]http.HandlerFunc{
-		"GET /{userId}/": c.apiListUserTodos,
+		"GET /{userId}/":                               c.ApiListUserTodos,
+		"POST /{userId}/todo/{$}":                      c.ApiNewTodo,
 		"POST /{userId}/todo/{todoId}/description/{$}": c.apiUpdateTodoDescription,
 		"POST /{userId}/todo/{todoId}/rank/{$}":        c.apiUpdateTodoRank,
 		"POST /{userId}/todo/{todoId}/completed/{$}":   c.apiUpdateTodoIsCompleted,
@@ -40,7 +42,7 @@ func (c *apiController) RegisterRoutes() *http.ServeMux {
 	return r
 }
 
-func (c *apiController) apiListUserTodos(w http.ResponseWriter, r *http.Request) {
+func (c *apiController) ApiListUserTodos(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("/api/{userId} route served")
 
@@ -54,6 +56,37 @@ func (c *apiController) apiListUserTodos(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Write(returnData)
+
+}
+
+func (c *apiController) ApiNewTodo(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("/app/{userId}/new route served")
+
+	userId := r.PathValue("userId")
+
+	var inputData struct {
+		Description string `json:"description"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&inputData); err != nil {
+		helpers.HandlerError(w, models.NewError(models.ErrorBadRequest, "H.001", "Invalid input data"))
+		return
+	}
+
+	todoId, err := c.todoService.AddTodoItem(userId, inputData.Description)
+	if err != nil {
+		helpers.HandlerError(w, err)
+		return
+	}
+
+	var returnData = struct {
+		Id string `json:"id"`
+	}{
+		Id: todoId,
+	}
+
+	json.NewEncoder(w).Encode(returnData)
 
 }
 

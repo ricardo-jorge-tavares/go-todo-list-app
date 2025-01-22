@@ -24,8 +24,12 @@ func AuthMiddleware(next http.Handler) http.HandlerFunc {
 			if contentType == "application/json" {
 
 				var returnData = struct {
-					Error string `json:"error"`
-				}{Error: "Invalid user!"}
+					ErrorCode    string `json:"errorCode"`
+					ErrorMessage string `json:"errorMessage"`
+				}{
+					ErrorCode:    "M.001",
+					ErrorMessage: "Invalid user!",
+				}
 
 				w.WriteHeader(http.StatusPreconditionFailed)
 				json.NewEncoder(w).Encode(returnData)

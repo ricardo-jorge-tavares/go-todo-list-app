@@ -28,7 +28,7 @@ type GetUserTodoListResponse struct {
 // Interfaces.
 type TodoServiceInterface interface {
 	GetUserTodoList(userId string) []GetUserTodoListResponse
-	AddTodoItem(userId string, description string) (id string)
+	AddTodoItem(userId string, description string) (id string, err error)
 	UpdateTodoItemDescription(userId string, todoId string, description string) (id string)
 	UpdateTodoItemRank(userId string, todoId string, rank int) (id string)
 	UpdateTodoItemIsCompleted(userId string, todoId string) (id string)
@@ -83,14 +83,21 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 
 }
 
-func (s *TodoService) AddTodoItem(userId string, description string) (id string) {
+func (s *TodoService) AddTodoItem(userId string, description string) (id string, err error) {
+
+	if userId == "" {
+		return "", models.NewError(models.ErrorBadRequest, "S.TD.001", "User Id is required")
+	}
+	if description == "" {
+		return "", models.NewError(models.ErrorBadRequest, "S.TD.002", "description is required")
+	}
 
 	sqlTodoId := s.sqlDbTodoRepo.InsertItem(userId, description)
-	fmt.Println("Inserted record with ID:", sqlTodoId)
+	// fmt.Println("Inserted record with ID:", sqlTodoId)
 
 	s.cacheInvalidateUser(userId)
 
-	return sqlTodoId
+	return sqlTodoId, nil
 
 }
 
