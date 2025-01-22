@@ -16,7 +16,7 @@ func TestIntegrationSuite(t *testing.T) {
 	ts, teardown := test.RunTestServer()
 	defer teardown(t)
 
-	var userId = "f6645494-56f5-40e4-a3f9-b6ae8935006b"
+	userId := "f6645494-56f5-40e4-a3f9-b6ae8935006b"
 
 	t.Run("should create a todo for an existing user", func(t *testing.T) {
 
@@ -68,7 +68,7 @@ func TestIntegrationSuite(t *testing.T) {
 
 	})
 
-	t.Run("it should return ok when insert new post successfully", func(t *testing.T) {
+	t.Run("should return ok when insert new post successfully", func(t *testing.T) {
 
 		resp, _ := http.Get(fmt.Sprintf("%s/api/%s/", ts.URL, userId))
 

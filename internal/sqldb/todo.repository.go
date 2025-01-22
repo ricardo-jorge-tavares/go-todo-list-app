@@ -20,11 +20,14 @@ type Todo struct {
 }
 
 // ToDoRepositoryInterface
-// type ToDoRepositoryInterface interface {
-// 	FindAll() ([]Todo, error)
-// 	FindById(id string) (Todo, error)
-// 	Insert(description string) string
-// }
+type ToDoRepositoryInterface interface {
+	FindUserItems(userId string) ([]Todo, error)
+	InsertItem(userId string, description string) string
+	UpdateItemDescription(todoId string, description string)
+	UpdateItemRank(userId string, todoId string, toRank int)
+	UpdateItemIsCompleted(todoId string)
+	DeleteItem(todoId string)
+}
 
 // SqlTodoRepository implements models.UserRepository
 type SqlTodoRepository struct {

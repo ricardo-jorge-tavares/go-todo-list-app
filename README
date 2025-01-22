@@ -36,16 +36,17 @@ $ docker-compose -f .docker/docker-compose.yml up
 $ go run ./main.go
 ```
 
-### 3. Run integration tests
-```bash
-$ go test -v -run="^TestIntegrationSuite$"
-```
-
-
-
 Open your brower at http://localhost:8080 or you can use the available API at http://localhost:8080/api (sorry, no API documentation exists yet!)
 
 Happy journey!
+
+
+## Tests
+```bash
+$ go test -v -run="^TestIntegrationSuite$" # For integration tests
+$ go test -v ./internal/services # For the only unit tests that exists
+$ go test -v ./... # Run all tests.
+```
 
 
 ## Detailed information regarding final goal

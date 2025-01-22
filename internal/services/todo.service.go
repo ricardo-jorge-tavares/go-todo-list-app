@@ -13,8 +13,7 @@ import (
 // Structs.
 type TodoService struct {
 	cache         *cache.Cache[string, models.CacheUserModel]
-	sqlDbTodoRepo *sqldb.SqlTodoRepository
-	// sqlDbTodoRepo sqldb.ToDoRepositoryInterface
+	sqlDbTodoRepo sqldb.ToDoRepositoryInterface
 }
 
 type GetUserTodoListResponse struct {
@@ -36,7 +35,7 @@ type TodoServiceInterface interface {
 }
 
 // Functions.
-func TodoServiceInit(c *cache.Cache[string, models.CacheUserModel], sqldbTodo *sqldb.SqlTodoRepository) *TodoService {
+func TodoServiceInit(c *cache.Cache[string, models.CacheUserModel], sqldbTodo sqldb.ToDoRepositoryInterface) *TodoService {
 	return &TodoService{
 		cache:         c,
 		sqlDbTodoRepo: sqldbTodo,
@@ -49,7 +48,7 @@ func (s *TodoService) GetUserTodoList(userId string) (r []GetUserTodoListRespons
 
 	// Check if the user is found in cache and if is still valid.
 	if found && user.ExpiresAt.After(time.Now()) {
-		fmt.Println("User found and valid. Returning it!")
+		fmt.Println("User found and valid in cache. Returning it!")
 		for k, v := range user.TodoList.List() {
 			r = append(r, GetUserTodoListResponse{Id: k, Description: v.Description, IsCompleted: v.IsCompleted, Rank: v.Rank, CreatedAt: v.CreatedAt})
 		}
