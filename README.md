@@ -45,7 +45,8 @@ Happy journey!
 ```bash
 $ go test -v -run="^TestIntegrationSuite$" # For integration tests
 $ go test -v ./internal/services # For the only unit tests that exists
-$ go test -v ./... # Run all tests.
+$ go test -v -bench=BenchmarkSuite -run="^$" # For benchmark tests
+$ go test -v ./... # Run all tests (except benchmark).
 ```
 
 

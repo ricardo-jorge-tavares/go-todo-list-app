@@ -41,15 +41,17 @@ func RunUp(db *sql.DB) {
 		return
 	}
 
+	// fmt.Println("runUp runned")
+
 }
 
 func RunDown(db *sql.DB) {
 
-	_, err := db.Exec("DROP TABLE IF EXISTS todo")
-	if err != nil {
-		return
-	}
+	// _, err := db.Exec("DROP TABLE IF EXISTS todo")
+	// if err != nil {
+	// 	return
+	// }
 
 	// fmt.Println("shuting down tests")
-	db.Close()
+	// db.Close()
 }

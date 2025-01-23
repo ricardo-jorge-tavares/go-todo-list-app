@@ -61,7 +61,7 @@ func (c *apiController) ApiListUserTodos(w http.ResponseWriter, r *http.Request)
 
 func (c *apiController) ApiNewTodo(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("/app/{userId}/new route served")
+	// fmt.Println("/app/{userId}/new route served")
 
 	userId := r.PathValue("userId")
 
