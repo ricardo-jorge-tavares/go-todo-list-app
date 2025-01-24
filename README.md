@@ -19,7 +19,7 @@ $ docker-compose -f .docker/docker-compose.yml up
 
 ### 3. Configure your virtual environment
 ``` bash
-$ go ./cmd/db-migrations.go # This will create tables on the PRD DB.
+$ go run ./cmd/db-migrations.go # This will create tables on the PRD DB.
 ```
 
 Everything will be installed and ready to run.
